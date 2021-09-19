@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <title>Worldmap</title>
+    <link rel="stylesheet" href="main.css" />
+    <script
+      type="text/javascript"
+      src="https://www.gstatic.com/charts/loader.js"
+    ></script>
+    <script type="text/javascript">
+      google.charts.load("current", {
+        packages: ["geochart"],
+      });
+      fetch("../textfiles/geolocations.txt")
+        .then((response) => response.text())
+        .then((data) => {
+          let parsedArray = data.split(",\n").map((e) => {
+            let res = e.match(/"country_name":"[\w ]+"/);
+            if (res) {
+              return res[0].split(":")[1].replace(`"`, "").replace(`"`, "");
+            }
+          });
+
+          let chart_data = parsedArray.reduce((a, c) => {
+            if (c && !c.includes("Not found")) !!a[c] ? a[c]++ : (a[c] = 1);
+            return a;
+          }, {});
+          chart_data = Object.keys(chart_data).map((e) => [e, chart_data[e]]);
+          google.charts.setOnLoadCallback(() => drawRegionsMap(chart_data));
+        });
+
+      function drawRegionsMap(chart_data) {
+        var data = google.visualization.arrayToDataTable([
+          ["Country", "No of Request"],
+          ...chart_data,
+        ]);
+
+        var options = {
+          colors: ["#F1948A"],
+        };
+
+        var chart = new google.visualization.GeoChart(
+          document.getElementById("regions_div")
+        );
+
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body style="margin: 0">
+    <h2>As per location:</h2>
+    <div id="regions_div" style="width: 100vw; height: 100vh"></div>
+  </body>
+</html>
